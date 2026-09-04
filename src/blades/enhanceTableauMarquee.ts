@@ -150,10 +150,7 @@ function buildSlide(source: SlideSource) {
   imageContainer.className = "slide-image-container"
   imageContainer.append(createSlideMediaEl(source.media, source.title))
 
-  // The frame sits behind the screen. .slide-stage is a preserve-3d context, where
-  // z-index does not sort — coplanar layers fall back to tree order — so the frame
-  // must come first in the DOM, not rely on its lower z-index.
-  stage.append(createFrameSvg(nextUid()), header, imageContainer)
+  stage.append(header, imageContainer, createFrameSvg(nextUid()))
   if (source.leftMedia) stage.append(createLeftCard(source.leftMedia))
   if (source.rightMedia) stage.append(createRightCard(source.rightMedia))
   slide.append(stage)

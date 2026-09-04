@@ -20,6 +20,11 @@ const CARD_INFLUENCE_MAX = 2
 const CARD_RADIUS_SCALE = 1
 const USE_CARD_INFLUENCE = true
 const CARD_IDLE_DELAY_MS = 1000
+// The idle float ran an endless yoyo tween on the callout tilts (±1.1deg, ±3px).
+// Those deltas land in the sub-pixel range on 3D-composited layers that contain a
+// <video>, so WebKit resamples them every frame for as long as the page is open —
+// which is what shimmers in Safari 18.6. Flip to true to restore the motion.
+const ENABLE_IDLE_FLOAT: boolean = false
 
 const LEFT_FLOAT_A = { rotationX: 0, rotationY: 1.1, x: 2, y: -3 }
 const LEFT_FLOAT_B = { rotationX: 0, rotationY: -0.85, x: -1.8, y: 2.4 }
@@ -305,7 +310,7 @@ export function bindPointerTilt(root: HTMLElement) {
   }
 
   const startIdleFloat = () => {
-    if (isMobileLayout()) return
+    if (!ENABLE_IDLE_FLOAT || isMobileLayout()) return
     const parts = activeSlideParts(root)
     if (!parts?.leftTilt && !parts?.rightTilt) {
       scheduleIdleFloat()
@@ -317,6 +322,7 @@ export function bindPointerTilt(root: HTMLElement) {
   }
 
   const scheduleIdleFloat = () => {
+    if (!ENABLE_IDLE_FLOAT) return
     if (idleTimer) window.clearTimeout(idleTimer)
     idleTimer = window.setTimeout(startIdleFloat, CARD_IDLE_DELAY_MS)
   }
