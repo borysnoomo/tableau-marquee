@@ -149,9 +149,15 @@
     -webkit-backface-visibility: hidden;
   }
   
-  /* GSAP retilts these on every mousemove; hold one composited layer for the
-     slide actually being tilted rather than re-promoting per frame. */
-  .swiper-slide-active .slide-card-tilt {
+  /* GSAP retilts these on every mousemove; hold one composited layer rather than
+     re-promoting per frame. Scoped to the active slide alone it created a layer on
+     one slide and destroyed a layer on another at the exact frame the swap started,
+     and both browsers pay for that with a re-raster. Prev/active/next covers every
+     slide large enough to show the seam, and a slide moving between those three
+     positions keeps its promotion throughout. */
+  .swiper-slide-prev .slide-card-tilt,
+  .swiper-slide-active .slide-card-tilt,
+  .swiper-slide-next .slide-card-tilt {
     will-change: transform;
   }
 

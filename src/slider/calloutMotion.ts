@@ -8,6 +8,7 @@ export const SLIDE_WIDTH_2K = 1075
 export const SLIDES_PER_VIEW_2K = DESIGN_WIDTH_2K / SLIDE_WIDTH_2K
 export const MIN_LOOP_SLIDES = 8
 export const SPEED_MS = 800
+export const TILT_RELEASE_S = 0.45
 export const MOBILE_CALLOUT_ENTER_DELAY_MS = 400
 export const MOBILE_MQ = "(max-width: 1023px)"
 export const TABLET_MQ = "(min-width: 768px) and (max-width: 1023px)"
@@ -29,10 +30,17 @@ const RIGHT_FLOAT_B = { rotationX: 0, rotationY: 0.95, x: 2.1, y: -2.8 }
 const CALLOUT_Z_DESKTOP = 100
 const CALLOUT_Z_TABLET = -48
 const CALLOUT_Z_MOBILE = 10
-const CALLOUT_PERSPECTIVE_DESKTOP = 1400
 const CALLOUT_PERSPECTIVE_TABLET = 620
 const CALLOUT_PERSPECTIVE_MOBILE = 400
 const CALLOUT_SCALE_TABLET = 0.72
+/* Desktop no longer gives each card a perspective() of its own (see
+   calloutProjection), which also took away the ~8.9% magnification that projection
+   contributed about the card's own centre. Fold it back in as a plain scale — affine,
+   so it stays on the compositor's fast path where a second perspective did not — and
+   the resting card keeps the size it has always had. Measured against the previous
+   rendering rather than derived from 1400/(1400-100): it reproduces both cards to
+   within 2px, and holds across viewport widths. */
+const CALLOUT_LIFT_DESKTOP = 1.0885
 const CALLOUT_REST_Y_DESKTOP = 14
 const CALLOUT_REST_Y_TABLET = 22
 const CALLOUT_REST_Y_MOBILE = 9
@@ -51,7 +59,11 @@ const calloutZ = () => {
   return CALLOUT_Z_DESKTOP
 }
 
-const calloutScale = () => (isTabletLayout() ? CALLOUT_SCALE_TABLET : 1)
+const calloutScale = () => {
+  if (isTabletLayout()) return CALLOUT_SCALE_TABLET
+  if (isMobileLayout()) return 1
+  return CALLOUT_LIFT_DESKTOP
+}
 
 const calloutRestY = () => {
   if (isTabletLayout()) return CALLOUT_REST_Y_TABLET
@@ -59,12 +71,28 @@ const calloutRestY = () => {
   return CALLOUT_REST_Y_DESKTOP
 }
 
-const calloutPerspective = () => {
+/* Desktop is the only breakpoint that rotates .slide-stage under the pointer, and it
+   is the one that shimmered. The callouts sit inside that stage (preserve-3d) beneath
+   the `perspective` on .slide, so the scene already projects both their z offset and
+   their flip; giving each card a perspective() of its own stacked a second projection
+   into its own matrix, and that product is not something WebKit will re-project on the
+   compositor. It re-rasterised the card on every frame of the tilt, and the sign either
+   side of the 90° crossing strobed backface-visibility through the flip. So desktop
+   uses the single scene perspective the stylesheet already declares (1800px), and
+   CALLOUT_LIFT_DESKTOP restores the size the second projection was contributing.
+
+   Below 1024px .slide-stage is `transform: none` — nothing rotates, the stacked
+   projection is static and cannot shimmer, and the tuned tablet/mobile geometry is
+   built on it. It stays there, unchanged.
+
+   transformPerspective: 0 makes GSAP drop perspective() from the transform outright
+   rather than carry a cached value forward. */
+const calloutProjection = () => {
   const transformPerspective = isTabletLayout()
     ? CALLOUT_PERSPECTIVE_TABLET
     : isMobileLayout()
       ? CALLOUT_PERSPECTIVE_MOBILE
-      : CALLOUT_PERSPECTIVE_DESKTOP
+      : 0
   return { transformPerspective, transformOrigin: "50% 50%" }
 }
 
@@ -140,14 +168,30 @@ export function activeSlideParts(root: HTMLElement) {
   }
 }
 
-export function resetSlideTilt(slide: Element) {
+/* Pass a duration for the slide that is losing the pointer tilt, i.e. the one the
+   user is still looking at. Snapping it to neutral moved its callouts 10-25px in a
+   single frame: they ride at translateZ inside the stage, so unwinding a few
+   degrees of stage rotation displaces them several times further than the slide
+   face. Slides that are already parked at neutral can stay on the instant path. */
+export function resetSlideTilt(slide: Element, duration = 0) {
   if (isMobileLayout()) return
   const stage = slide.querySelector<HTMLElement>(".slide-stage")
   const image = slide.querySelector<HTMLElement>(".slide-image")
   const tilts = slide.querySelectorAll<HTMLElement>(".slide-card-tilt")
-  if (stage) gsap.set(stage, { rotationX: 0, rotationY: 0, transformPerspective: 0 })
-  if (image) gsap.set(image, { x: 0, y: 0 })
-  if (tilts.length) gsap.set(tilts, { rotationX: 0, rotationY: 0, x: 0, y: 0 })
+
+  if (duration > 0) {
+    const release = { duration, ease: "power2.out", overwrite: "auto" as const }
+    if (stage) gsap.to(stage, { rotationX: 0, rotationY: 0, ...release })
+    if (image) gsap.to(image, { x: 0, y: 0, ...release })
+    if (tilts.length) gsap.to(tilts, { rotationX: 0, rotationY: 0, x: 0, y: 0, ...release })
+    return
+  }
+
+  // overwrite kills any release still in flight, so it cannot resume past the set.
+  const settle = { overwrite: "auto" as const }
+  if (stage) gsap.set(stage, { rotationX: 0, rotationY: 0, transformPerspective: 0, ...settle })
+  if (image) gsap.set(image, { x: 0, y: 0, ...settle })
+  if (tilts.length) gsap.set(tilts, { rotationX: 0, rotationY: 0, x: 0, y: 0, ...settle })
 }
 
 export function applySlideSides(swiper: { slides: ArrayLike<HTMLElement> }) {
@@ -164,7 +208,7 @@ export function hideCallouts(cards: CalloutEls) {
   const els = calloutList(cards)
   if (!els.length) return
   gsap.set(els, {
-    ...calloutPerspective(),
+    ...calloutProjection(),
     autoAlpha: 0,
     rotationY: 0,
     rotationX: 0,
@@ -181,33 +225,22 @@ export function playCalloutEnter(cards: CalloutEls) {
   const restY = calloutRestY()
   const z = calloutZ()
   const scale = calloutScale()
-  const perspective = calloutPerspective()
   const tl = gsap.timeline({ defaults: { ease: "power2.out" } })
 
   const flipIn = (el: HTMLElement, fromY: number, toY: number) => {
     gsap.set(el, {
-      ...perspective,
+      ...calloutProjection(),
       visibility: "visible",
       rotationX: 0,
       x: 0,
       y: 0,
       z,
       scale,
-      // force3D: true,
     })
     tl.fromTo(
       el,
-      { opacity: 0, rotationY: fromY, z, scale, transformPerspective: perspective.transformPerspective },
-      {
-        opacity: 1,
-        rotationY: toY,
-        z,
-        scale,
-        transformPerspective: perspective.transformPerspective,
-        duration: 0.9,
-        immediateRender: true,
-        // force3D: true,
-      },
+      { opacity: 0, rotationY: fromY, z, scale },
+      { opacity: 1, rotationY: toY, z, scale, duration: 0.9, immediateRender: true },
       0,
     )
   }
@@ -222,13 +255,12 @@ export function playCalloutLeave(cards: CalloutEls) {
   if (!els.length) return
   const z = isMobileLayout() ? calloutZ() : 0
   const scale = calloutScale()
-  const perspective = calloutPerspective()
   const tl = gsap.timeline({ defaults: { ease: "power2.in" } })
   if (cards.left) {
-    tl.to(cards.left, { rotationY: 120, rotationX: 0, z, scale, ...perspective, autoAlpha: 0, opacity: 0, duration: 0.45 }, 0)
+    tl.to(cards.left, { rotationY: 120, rotationX: 0, z, scale, ...calloutProjection(), autoAlpha: 0, opacity: 0, duration: 0.45 }, 0)
   }
   if (cards.right) {
-    tl.to(cards.right, { rotationY: -120, rotationX: 0, z, scale, ...perspective, autoAlpha: 0, opacity: 0, duration: 0.45 }, 0)
+    tl.to(cards.right, { rotationY: -120, rotationX: 0, z, scale, ...calloutProjection(), autoAlpha: 0, opacity: 0, duration: 0.45 }, 0)
   }
   return tl
 }
@@ -266,6 +298,7 @@ export function bindPointerTilt(root: HTMLElement) {
   let frame = 0
   let idleTimer = 0
   let floating = false
+  let floatTargets: HTMLElement[] = []
   let lastX = window.innerWidth / 2
   let lastY = window.innerHeight / 2
 
@@ -300,8 +333,12 @@ export function bindPointerTilt(root: HTMLElement) {
     }
     if (!floating) return
     floating = false
-    const parts = activeSlideParts(root)
-    gsap.killTweensOf([parts?.leftTilt, parts?.rightTilt].filter(Boolean))
+    // Kill what is actually floating. Re-reading .swiper-slide-active here caught
+    // the wrong elements: the only caller during a swap is slideChangeTransitionStart,
+    // by which point Swiper has already moved that class onto the incoming slide, so
+    // the outgoing slide kept its infinite yoyo running underneath every later reset.
+    if (floatTargets.length) gsap.killTweensOf(floatTargets)
+    floatTargets = []
   }
 
   const startIdleFloat = () => {
@@ -312,6 +349,7 @@ export function bindPointerTilt(root: HTMLElement) {
       return
     }
     floating = true
+    floatTargets = [parts?.leftTilt, parts?.rightTilt].filter((el): el is HTMLElement => Boolean(el))
     if (parts?.leftTilt) floatCard(parts.leftTilt, LEFT_FLOAT_A, LEFT_FLOAT_B, 3.8)
     if (parts?.rightTilt) floatCard(parts.rightTilt, RIGHT_FLOAT_A, RIGHT_FLOAT_B, 4.6)
   }

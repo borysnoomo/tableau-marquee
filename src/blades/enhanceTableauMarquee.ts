@@ -13,6 +13,7 @@ import {
   SLIDES_PER_VIEW,
   SLIDES_PER_VIEW_2K,
   SPEED_MS,
+  TILT_RELEASE_S,
   MOBILE_CALLOUT_ENTER_DELAY_MS,
 } from "../slider/calloutMotion"
 import { applyBackgroundTokens } from "../slider/backgrounds"
@@ -225,9 +226,12 @@ function initCarousel(root: HTMLElement) {
   let lastActiveSlide: Element | null = null
   let enterTimer = 0
 
-  const resetLeavingSlide = (swiper: Swiper) => {
+  // `releasing` is the slide that still carries the pointer tilt — it eases back to
+  // neutral over the swap instead of snapping. Everything else is already neutral.
+  const resetLeavingSlide = (swiper: Swiper, releasing: Element | null = null) => {
     for (const slideEl of swiper.slides) {
-      if (!slideEl.classList.contains("swiper-slide-active")) resetSlideTilt(slideEl)
+      if (slideEl.classList.contains("swiper-slide-active")) continue
+      resetSlideTilt(slideEl, slideEl === releasing ? TILT_RELEASE_S : 0)
     }
   }
 
@@ -252,11 +256,6 @@ function initCarousel(root: HTMLElement) {
   const playIncomingEnter = (instance: Swiper) => {
     const active = visualActiveSlide(instance)
     if (!active || active === lastActiveSlide) return
-    const swappedClone =
-      lastActiveSlide &&
-      lastActiveSlide.getAttribute("data-swiper-slide-index") ===
-        active.getAttribute("data-swiper-slide-index")
-    if (swappedClone) playSlideCallouts(lastActiveSlide, "hide")
     playSlideCallouts(active, "enter")
     lastActiveSlide = active
   }
@@ -329,7 +328,7 @@ function initCarousel(root: HTMLElement) {
       setTranslate: applySlideSides,
       progress: applySlideSides,
       slideChangeTransitionStart(instance) {
-        resetLeavingSlide(instance)
+        resetLeavingSlide(instance, lastActiveSlide)
         if (calloutsReady) {
           if (isMobileLayout()) {
             playOutgoingLeave(instance)
