@@ -274,7 +274,7 @@
     }
 
     .slide-image {
-      border-radius: 16px !important;
+      border-radius: 0  0 16px 16px !important;
     }
   
     .slide-stage {
