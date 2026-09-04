@@ -1,379 +1,385 @@
-.slide {
-  --slide-width: 862px;
-  --slide-height: 612px;
-  --image-radius: 12px;
-  --card-radius: 22px;
-  --glass-pad: 5px;
-  --callout-radius: 22px;
-  --callout-img-radius: 15px;
-  --card-inset-x: calc(10px / 862px * 100cqw);
-  --card-inset-top: calc(75.5px / 612px * 100cqh);
-  --card-inset-bottom: calc(10px / 612px * 100cqh);
-  --frame-pad-x: 20px;
-  --frame-pad-top: 8px;
-  --frame-pad-bottom: 32px;
-
-  position: relative;
-  width: 100%;
-  margin-inline: auto;
-  aspect-ratio: 862 / 612;
-  container-type: size;
-  perspective: 1800px;
-  font-family: var(--font-salesforce-sans);
-  color: #fff;
-  overflow: visible;
-}
-
-.slide-stage {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  transform-style: preserve-3d;
-  transform-origin: 50% 50%;
-}
-
-.slide-frame {
-  position: absolute;
-  z-index: 1;
-  left: calc(var(--frame-pad-x) / var(--slide-width) * -100%);
-  top: calc(var(--frame-pad-top) / var(--slide-height) * -100%);
-  width: calc(100% * (var(--slide-width) + 2 * var(--frame-pad-x)) / var(--slide-width));
-  height: calc(100% * (var(--slide-height) + var(--frame-pad-top) + var(--frame-pad-bottom)) / var(--slide-height));
-  display: block;
-  overflow: visible;
-  pointer-events: none;
-  filter: drop-shadow(0 12px 20px rgba(0, 30, 91, 0.05));
-  transform: translateZ(0);
-}
-
-.slide-header {
-  position: relative;
-  z-index: 2;
-  flex: 0 0 var(--card-inset-top);
-  height: var(--card-inset-top);
-  padding: 0 var(--card-inset-x);
-  text-align: center;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-
-.slide-title {
-  flex: 1 1 auto;
-  min-width: 0;
-  max-width: 605px;
-  margin: 0;
-  font-family: var(--font-avant-garde);
-  font-size: 24px;
-  font-weight: 600;
-  line-height: 29px;
-  letter-spacing: -0.03em;
-  white-space: nowrap;
-  color: #fff;
-}
-
-.slide-description {
-  flex: 0 0 calc(444px / 862px * 100%);
-  width: calc(444px / 862px * 100%);
-  margin: 0;
-  font-family: var(--font-salesforce-sans);
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 28px;
-}
-
-.slide-image-container {
-  position: relative;
-  z-index: 2;
-  flex: 1 1 auto;
-  min-height: 0;
-  width: 100%;
-  display: flex;
-  overflow: hidden;
-  padding: 0 var(--card-inset-x) var(--card-inset-bottom);
-  isolation: isolate;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-
-.slide-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  border-radius: var(--image-radius);
-  flex: 1 1 auto;
-}
-
-video.slide-image {
-  transform: none;
-  filter: none;
-  backface-visibility: visible;
-  -webkit-backface-visibility: visible;
-}
-
-.slide-content {
-  position: absolute;
-  left: var(--card-inset-x);
-  top: var(--card-inset-top);
-  width: calc(100% - 2 * var(--card-inset-x));
-  height: calc(100% - var(--card-inset-top) - var(--card-inset-bottom));
-  border-radius: var(--image-radius);
-  overflow: hidden;
-  z-index: 0;
-}
-
-.slide-content img {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.slide-card {
-  position: absolute;
-  z-index: 5;
-  transform: translateZ(80px);
-  pointer-events: none;
-  visibility: hidden;
-  transform-style: flat;
-  -webkit-transform-style: flat;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-.slide-card-tilt {
-  width: 100%;
-  transform-style: flat;
-  -webkit-transform-style: flat;
-  transform-origin: 50% 50%;
-}
-
-.slide-card-glass {
-  box-sizing: border-box;
-  position: relative;
-  transform-style: flat;
-  -webkit-transform-style: flat;
-  width: 100%;
-  padding: var(--glass-pad);
-  overflow: visible;
-  border-radius: var(--callout-radius);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  background: none;
-  box-shadow: 0 12px 20px 0 rgba(0, 30, 91, 0.05);
-}
-
-.slide-card-glass::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    linear-gradient(180deg, rgba(255, 93, 44, 0.09) 0%, rgba(255, 93, 44, 0.15) 100%),
-    rgba(255, 255, 255, 0.15);
-}
-
-.slide-card-media {
-  position: relative;
-  z-index: 1;
-  overflow: hidden;
-  border-radius: var(--callout-img-radius);
-  isolation: isolate;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  background: #fff;
-}
-
-.slide-card-photo {
-  position: relative;
-  z-index: 1;
-  display: block;
-  width: 100%;
-  height: auto;
-  aspect-ratio: var(--media-aspect, auto);
-  object-fit: cover;
-  object-position: top center;
-  border-radius: var(--callout-img-radius);
-}
-
-video.slide-card-photo {
-  z-index: 0;
-  border-radius: 0;
-  /* Safari promotes <video> into a native overlay if it has its own
-     transform/filter/backface. That overlay ignores z-index (glass tint
-     over the picture) and jitters while the slide translates. */
-  transform: none;
-  filter: none;
-  backface-visibility: visible;
-  -webkit-backface-visibility: visible;
-}
-
-.slide-card-media-cover {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-}
-
-.slide-card--left {
-  left: calc(-117px / 862px * 100%);
-  top: calc(154px / 612px * 100%);
-  width: calc(221px / 862px * 100%);
-}
-
-.slide-card--right {
-  left: calc(683px / 862px * 100%);
-  top: calc(233px / 612px * 100%);
-  width: calc(273px / 862px * 100%);
-}
-
-@media (min-width: 2560px) {
+#tableau-marquee-2026 {
   .slide {
-    --slide-width: 1075px;
-    --slide-height: 764px;
-    --card-inset-x: calc(15px / 1075px * 100cqw);
-    --card-inset-top: calc(96px / 764px * 100cqh);
-    --card-inset-bottom: calc(15px / 764px * 100cqh);
-    aspect-ratio: 1075 / 764;
-  }
-
-  .slide-card--left {
-    left: calc(-146px / 1075px * 100%);
-    top: calc(192px / 764px * 100%);
-    width: calc(271px / 1075px * 100%);
-  }
-
-  .slide-card--right {
-    left: calc(852px / 1075px * 100%);
-    top: calc(291px / 764px * 100%);
-    width: calc(341px / 1075px * 100%);
-  }
-}
-
-@media (max-width: 1023px) {
-  .slide {
-    --image-radius: 8px;
-    --card-radius: 16px;
+    --slide-width: 862px;
+    --slide-height: 612px;
+    --image-radius: 12px;
+    --card-radius: 22px;
     --glass-pad: 5px;
-    --callout-radius: 12px;
-    --callout-img-radius: 8px;
-    aspect-ratio: auto;
-    height: auto;
-    border-radius: 16px;
-    background: rgb(255 255 255 / 0.2);
-    box-shadow: inset 0 0 0 0.6px rgb(255 255 255 / 0.45);
-    perspective: 400px;
-    container-type: inline-size;
-  }
-
-  .slide-stage {
+    --callout-radius: 22px;
+    --callout-img-radius: 15px;
+    --card-inset-x: calc(10px / 862px * 100cqw);
+    --card-inset-top: calc(75.5px / 612px * 100cqh);
+    --card-inset-bottom: calc(10px / 612px * 100cqh);
+    --frame-pad-x: 20px;
+    --frame-pad-top: 8px;
+    --frame-pad-bottom: 32px;
+  
     position: relative;
-    inset: auto;
-    transform: none !important;
-    transform-style: flat;
+    width: 100%;
+    margin-inline: auto;
+    aspect-ratio: 862 / 612;
+    container-type: size;
+    perspective: 1800px;
+    font-family: var(--font-salesforce-sans);
+    color: #fff;
+    overflow: visible;
   }
-
+  
+  .slide-stage {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    transform-style: preserve-3d;
+    transform-origin: 50% 50%;
+  }
+  
   .slide-frame {
-    display: none !important;
+    position: absolute;
+    z-index: 1;
+    left: calc(var(--frame-pad-x) / var(--slide-width) * -100%);
+    top: calc(var(--frame-pad-top) / var(--slide-height) * -100%);
+    width: calc(100% * (var(--slide-width) + 2 * var(--frame-pad-x)) / var(--slide-width));
+    height: calc(100% * (var(--slide-height) + var(--frame-pad-top) + var(--frame-pad-bottom)) / var(--slide-height));
+    display: block;
+    overflow: visible;
+    pointer-events: none;
+    filter: drop-shadow(0 12px 20px rgba(0, 30, 91, 0.05));
+    transform: translateZ(0);
   }
-
+  
   .slide-header {
-    flex: 0 0 auto;
-    height: auto;
-    padding: 12px 8px;
+    position: relative;
+    z-index: 2;
+    flex: 0 0 var(--card-inset-top);
+    height: var(--card-inset-top);
+    padding: 0 var(--card-inset-x);
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
   }
-
+  
   .slide-title {
-    max-width: 311px;
-    font-size: 18px;
-    line-height: 22px;
-    font-weight: 600;
-    white-space: normal;
-  }
-
-  .slide-image-container {
-    flex: 0 0 auto;
-    aspect-ratio: 327 / 207;
-    padding: 0;
-    overflow: hidden;
-    isolation: isolate;
-    transform: none;
-  }
-
-  .slide-image,
-  .slide-image-container video,
-  .slide-image-container img {
-    border-radius: 0 0 var(--image-radius) var(--image-radius);
-    overflow: hidden;
-    clip-path: inset(0 round 0 0 var(--image-radius) var(--image-radius));
-  }
-
-  .slide-card-tilt {
-    transform: none;
-  }
-
-  .slide-card-photo {
-    border-radius: var(--callout-img-radius);
-  }
-
-  .slide-card--left {
-    left: -12px;
-    top: 190px;
-    width: 105px;
-  }
-
-  .slide-card--right {
-    left: auto;
-    right: -12px;
-    top: 192px;
-    bottom: -24px;
-    width: 134px;
-  }
-}
-
-@media (min-width: 768px) and (max-width: 1023px) {
-  .slide {
-    --card-radius: 20px;
-    --callout-radius: 20px;
-    --callout-img-radius: 12px;
-    max-width: 582px;
-    border-radius: 20px;
-    perspective: 620px;
-  }
-
-  .slide-header {
-    padding: 19px 8px;
-  }
-
-  .slide-title {
-    max-width: 476px;
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 605px;
+    margin: 0;
+    font-family: var(--font-avant-garde);
     font-size: 24px;
     font-weight: 600;
-    line-height: 32px;
-    letter-spacing: -0.06px;
+    line-height: 29px;
+    letter-spacing: -0.03em;
+    white-space: nowrap;
+    color: #fff;
   }
-
+  
+  .slide-description {
+    flex: 0 0 calc(444px / 862px * 100%);
+    width: calc(444px / 862px * 100%);
+    margin: 0;
+    font-family: var(--font-salesforce-sans);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 28px;
+  }
+  
   .slide-image-container {
-    aspect-ratio: 582 / 368;
+    position: relative;
+    z-index: 2;
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+    display: flex;
+    overflow: hidden;
+    padding: 0 var(--card-inset-x) var(--card-inset-bottom);
+    isolation: isolate;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
   }
-
+  
+  .slide-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 20px;
+    flex: 1 1 auto;
+  }
+  
+  video.slide-image {
+    transform: none;
+    filter: none;
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
+  }
+  
+  .slide-content {
+    position: absolute;
+    left: var(--card-inset-x);
+    top: var(--card-inset-top);
+    width: calc(100% - 2 * var(--card-inset-x));
+    height: calc(100% - var(--card-inset-top) - var(--card-inset-bottom));
+    border-radius: var(--image-radius);
+    overflow: hidden;
+    z-index: 0;
+  }
+  
+  .slide-content img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .slide-card {
+    position: absolute;
+    z-index: 5;
+    transform: translateZ(80px);
+    pointer-events: none;
+    visibility: hidden;
+    transform-style: flat;
+    -webkit-transform-style: flat;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  
+  .slide-card-tilt {
+    width: 100%;
+    transform-style: flat;
+    -webkit-transform-style: flat;
+    transform-origin: 50% 50%;
+  }
+  
+  .slide-card-glass {
+    box-sizing: border-box;
+    position: relative;
+    transform-style: flat;
+    -webkit-transform-style: flat;
+    width: 100%;
+    padding: var(--glass-pad);
+    overflow: visible;
+    border-radius: var(--callout-radius);
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+    background: none;
+    box-shadow: 0 12px 20px 0 rgba(0, 30, 91, 0.05);
+  }
+  
+  .slide-card-glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+      linear-gradient(180deg, rgba(255, 93, 44, 0.09) 0%, rgba(255, 93, 44, 0.15) 100%),
+      rgba(255, 255, 255, 0.15);
+  }
+  
+  .slide-card-media {
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+    border-radius: var(--callout-img-radius);
+    isolation: isolate;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    background: #fff;
+  }
+  
+  .slide-card-photo {
+    position: relative;
+    z-index: 1;
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: var(--media-aspect, auto);
+    object-fit: cover;
+    object-position: top center;
+    border-radius: var(--callout-img-radius);
+  }
+  
+  video.slide-card-photo {
+    z-index: 0;
+    border-radius: 0;
+    /* Safari promotes <video> into a native overlay if it has its own
+       transform/filter/backface. That overlay ignores z-index (glass tint
+       over the picture) and jitters while the slide translates. */
+    transform: none;
+    filter: none;
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
+  }
+  
+  .slide-card-media-cover {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+  
   .slide-card--left {
-    left: -92px;
-    top: 257px;
-    width: 253px;
+    left: calc(-117px / 862px * 100%);
+    top: calc(154px / 612px * 100%);
+    width: calc(221px / 862px * 100%);
   }
-
+  
   .slide-card--right {
-    left: 352px;
-    right: auto;
-    top: 242px;
-    bottom: auto;
-    width: 327px;
+    left: calc(683px / 862px * 100%);
+    top: calc(233px / 612px * 100%);
+    width: calc(273px / 862px * 100%);
+  }
+  
+  @media (min-width: 2560px) {
+    .slide {
+      --slide-width: 1075px;
+      --slide-height: 764px;
+      --card-inset-x: calc(15px / 1075px * 100cqw);
+      --card-inset-top: calc(96px / 764px * 100cqh);
+      --card-inset-bottom: calc(15px / 764px * 100cqh);
+      aspect-ratio: 1075 / 764;
+    }
+  
+    .slide-card--left {
+      left: calc(-146px / 1075px * 100%);
+      top: calc(192px / 764px * 100%);
+      width: calc(271px / 1075px * 100%);
+    }
+  
+    .slide-card--right {
+      left: calc(852px / 1075px * 100%);
+      top: calc(291px / 764px * 100%);
+      width: calc(341px / 1075px * 100%);
+    }
+  }
+  
+  @media (max-width: 1023px) {
+    .slide {
+      --image-radius: 8px;
+      --card-radius: 16px;
+      --glass-pad: 5px;
+      --callout-radius: 12px;
+      --callout-img-radius: 8px;
+      aspect-ratio: auto;
+      height: auto;
+      border-radius: 16px;
+      background: rgb(255 255 255 / 0.2);
+      box-shadow: inset 0 0 0 0.6px rgb(255 255 255 / 0.45);
+      perspective: 400px;
+      container-type: inline-size;
+    }
+
+    .slide-image {
+      border-radius: 16px !important;
+    }
+  
+    .slide-stage {
+      position: relative;
+      inset: auto;
+      transform: none !important;
+      transform-style: flat;
+    }
+  
+    .slide-frame {
+      display: none !important;
+    }
+  
+    .slide-header {
+      flex: 0 0 auto;
+      height: auto;
+      padding: 12px 8px;
+    }
+  
+    .slide-title {
+      max-width: 311px;
+      font-size: 18px;
+      line-height: 22px;
+      font-weight: 600;
+      white-space: normal;
+    }
+  
+    .slide-image-container {
+      flex: 0 0 auto;
+      aspect-ratio: 327 / 207;
+      padding: 0;
+      overflow: hidden;
+      isolation: isolate;
+      transform: none;
+    }
+  
+    .slide-image,
+    .slide-image-container video,
+    .slide-image-container img {
+      border-radius: 0 0 var(--image-radius) var(--image-radius);
+      overflow: hidden;
+      clip-path: inset(0 round 0 0 var(--image-radius) var(--image-radius));
+    }
+  
+    .slide-card-tilt {
+      transform: none;
+    }
+  
+    .slide-card-photo {
+      border-radius: var(--callout-img-radius);
+    }
+  
+    .slide-card--left {
+      left: -12px;
+      top: 190px;
+      width: 105px;
+    }
+  
+    .slide-card--right {
+      left: auto;
+      right: -12px;
+      top: 192px;
+      bottom: -24px;
+      width: 134px;
+    }
+  }
+  
+  @media (min-width: 768px) and (max-width: 1023px) {
+    .slide {
+      --card-radius: 20px;
+      --callout-radius: 20px;
+      --callout-img-radius: 12px;
+      max-width: 582px;
+      border-radius: 20px;
+      perspective: 620px;
+    }
+  
+    .slide-header {
+      padding: 19px 8px;
+    }
+  
+    .slide-title {
+      max-width: 476px;
+      font-size: 24px;
+      font-weight: 600;
+      line-height: 32px;
+      letter-spacing: -0.06px;
+    }
+  
+    .slide-image-container {
+      aspect-ratio: 582 / 368;
+    }
+  
+    .slide-card--left {
+      left: -92px;
+      top: 257px;
+      width: 253px;
+    }
+  
+    .slide-card--right {
+      left: 352px;
+      right: auto;
+      top: 242px;
+      bottom: auto;
+      width: 327px;
+    }
   }
 }
