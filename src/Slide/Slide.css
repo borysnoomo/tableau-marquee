@@ -149,6 +149,12 @@
     -webkit-backface-visibility: hidden;
   }
   
+  /* GSAP retilts these on every mousemove; hold one composited layer for the
+     slide actually being tilted rather than re-promoting per frame. */
+  .swiper-slide-active .slide-card-tilt {
+    will-change: transform;
+  }
+
   .slide-card-tilt {
     width: 100%;
     transform-style: flat;

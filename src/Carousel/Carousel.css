@@ -33,13 +33,17 @@
 
 .carousel-swiper .swiper-wrapper {
   align-items: center;
-  transform-style: preserve-3d;
+  /* Deliberately flat. Nothing in the wrapper/slide/item chain has a z offset or a
+     3D rotation, so preserve-3d changed nothing visually but put all nine slides in
+     one 3D sorting context as coplanar layers at z=0 — ambiguous paint order that
+     some WebKit builds resolve stably and others flicker on. */
+  transform-style: flat;
 }
 
 .carousel-swiper .swiper-slide {
   height: auto;
   overflow: visible;
-  transform-style: preserve-3d;
+  transform-style: flat;
 }
 
 @media (min-width: 1440px) {
@@ -62,7 +66,7 @@
   opacity: 0.2;
   transform: scale(0.38);
   transform-origin: center center;
-  transform-style: preserve-3d;
+  transform-style: flat;
   transition:
     opacity var(--carousel-duration) ease,
     transform var(--carousel-duration) ease;
