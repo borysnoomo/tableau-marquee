@@ -209,17 +209,17 @@
 }
 
 #tableau-marquee-2026 .slide--claude .slide-card--left {
-  left: calc(-153px / 862px * 100%);
-  top: calc(365px / 612px * 100%);
-  width: calc(375px / 862px * 100%);
-  --callout-h: calc(273px / 612px * 100%);
+  left: -17.7494%;  /* -153/862 */
+  top: 59.6405%;  /* 365/612 */
+  width: 43.5035%;  /* 375/862 */
+  --callout-h: 44.6078%;  /* 273/612 */
 }
 
 #tableau-marquee-2026 .slide--slack .slide-card--left {
-  left: calc(-80px / 862px * 100%);
-  top: calc(341px / 612px * 100%);
-  width: calc(276px / 862px * 100%);
-  --callout-h: calc(288px / 612px * 100%);
+  left: -9.2807%;  /* -80/862 */
+  top: 55.719%;  /* 341/612 */
+  width: 32.0186%;  /* 276/862 */
+  --callout-h: 47.0588%;  /* 288/612 */
 }
 
 #tableau-marquee-2026 .card--card_resource,
@@ -237,17 +237,17 @@
   }
 
   #tableau-marquee-2026 .slide--claude .slide-card--left {
-    left: calc(-191px / 1075px * 100%);
-    top: calc(456px / 764px * 100%);
-    width: calc(468px / 1075px * 100%);
-    --callout-h: calc(341px / 764px * 100%);
+    left: -17.7674%;  /* -191/1075 */
+    top: 59.6859%;  /* 456/764 */
+    width: 43.5349%;  /* 468/1075 */
+    --callout-h: 44.6335%;  /* 341/764 */
   }
 
   #tableau-marquee-2026 .slide--slack .slide-card--left {
-    left: calc(-100px / 1075px * 100%);
-    top: calc(426px / 764px * 100%);
-    width: calc(344px / 1075px * 100%);
-    --callout-h: calc(360px / 764px * 100%);
+    left: -9.3023%;  /* -100/1075 */
+    top: 55.7592%;  /* 426/764 */
+    width: 32%;  /* 344/1075 */
+    --callout-h: 47.1204%;  /* 360/764 */
   }
 }
 

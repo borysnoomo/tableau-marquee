@@ -7,13 +7,16 @@
     --glass-pad: 5px;
     --callout-radius: 22px;
     --callout-img-radius: 15px;
-    --card-inset-x: calc(10px / 862px * 100cqw);
-    --card-inset-top: calc(75.5px / 612px * 100cqh);
-    --card-inset-bottom: calc(10px / 612px * 100cqh);
-    --frame-pad-x: 20px;
-    --frame-pad-top: 8px;
-    --frame-pad-bottom: 32px;
-  
+    --card-inset-x: 1.1601cqw;  /* 10/862 */
+    --card-inset-top: 12.3366cqh;  /* 75.5/612 */
+    --card-inset-bottom: 1.634cqh;  /* 10/612 */
+    /* Frame overhang, as percentages of the slide box. Precomputed rather than
+       divided in calc(): WebKit rejects <length>/<length>, which drops the
+       declaration and collapses the frame onto the slide. */
+    --frame-left: -2.3202%;  /* -20/862 */
+    --frame-top: -1.3072%;  /* -8/612 */
+    --frame-width: 104.6404%;  /* (862 + 2*20)/862 */
+    --frame-height: 106.5359%;  /* (612 + 8 + 32)/612 */
     position: relative;
     width: 100%;
     margin-inline: auto;
@@ -37,10 +40,10 @@
   .slide-frame {
     position: absolute;
     z-index: 1;
-    left: calc(var(--frame-pad-x) / var(--slide-width) * -100%);
-    top: calc(var(--frame-pad-top) / var(--slide-height) * -100%);
-    width: calc(100% * (var(--slide-width) + 2 * var(--frame-pad-x)) / var(--slide-width));
-    height: calc(100% * (var(--slide-height) + var(--frame-pad-top) + var(--frame-pad-bottom)) / var(--slide-height));
+    left: var(--frame-left);
+    top: var(--frame-top);
+    width: var(--frame-width);
+    height: var(--frame-height);
     display: block;
     overflow: visible;
     pointer-events: none;
@@ -76,8 +79,8 @@
   }
   
   .slide-description {
-    flex: 0 0 calc(444px / 862px * 100%);
-    width: calc(444px / 862px * 100%);
+    flex: 0 0 51.5081%;  /* 444/862 */
+    width: 51.5081%;  /* 444/862 */
     margin: 0;
     font-family: var(--font-salesforce-sans);
     font-size: 16px;
@@ -100,6 +103,7 @@
   }
   
   .slide-image {
+  -webkit-user-drag: none;
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -190,6 +194,7 @@
   }
   
   .slide-card-photo {
+  -webkit-user-drag: none;
     position: relative;
     z-index: 1;
     display: block;
@@ -223,37 +228,41 @@
   }
   
   .slide-card--left {
-    left: calc(-117px / 862px * 100%);
-    top: calc(154px / 612px * 100%);
-    width: calc(221px / 862px * 100%);
+    left: -13.5731%;  /* -117/862 */
+    top: 25.1634%;  /* 154/612 */
+    width: 25.6381%;  /* 221/862 */
   }
   
   .slide-card--right {
-    left: calc(683px / 862px * 100%);
-    top: calc(233px / 612px * 100%);
-    width: calc(273px / 862px * 100%);
+    left: 79.2343%;  /* 683/862 */
+    top: 38.0719%;  /* 233/612 */
+    width: 31.6705%;  /* 273/862 */
   }
   
   @media (min-width: 2560px) {
     .slide {
       --slide-width: 1075px;
       --slide-height: 764px;
-      --card-inset-x: calc(15px / 1075px * 100cqw);
-      --card-inset-top: calc(96px / 764px * 100cqh);
-      --card-inset-bottom: calc(15px / 764px * 100cqh);
+      --card-inset-x: 1.3953cqw;  /* 15/1075 */
+      --card-inset-top: 12.5654cqh;  /* 96/764 */
+      --card-inset-bottom: 1.9634cqh;  /* 15/764 */
+      --frame-left: -1.8605%;  /* -20/1075 */
+      --frame-top: -1.0471%;  /* -8/764 */
+      --frame-width: 103.7209%;  /* (1075 + 2*20)/1075 */
+      --frame-height: 105.2356%;  /* (764 + 8 + 32)/764 */
       aspect-ratio: 1075 / 764;
     }
   
     .slide-card--left {
-      left: calc(-146px / 1075px * 100%);
-      top: calc(192px / 764px * 100%);
-      width: calc(271px / 1075px * 100%);
+      left: -13.5814%;  /* -146/1075 */
+      top: 25.1309%;  /* 192/764 */
+      width: 25.2093%;  /* 271/1075 */
     }
   
     .slide-card--right {
-      left: calc(852px / 1075px * 100%);
-      top: calc(291px / 764px * 100%);
-      width: calc(341px / 1075px * 100%);
+      left: 79.2558%;  /* 852/1075 */
+      top: 38.089%;  /* 291/764 */
+      width: 31.7209%;  /* 341/1075 */
     }
   }
   

@@ -19,6 +19,10 @@
   overflow-y: visible;
   padding-block: var(--tilt-gutter);
   perspective: 1800px;
+  /* The pointer tilt runs on mousemove, so a press-and-move over the slider
+     reads as a text drag in Safari and selects the slide copy behind it. */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .carousel-swiper.swiper,
