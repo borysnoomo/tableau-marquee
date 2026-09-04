@@ -48,7 +48,12 @@
     overflow: visible;
     pointer-events: none;
     filter: drop-shadow(0 12px 20px rgba(0, 30, 91, 0.05));
-    transform: translateZ(0);
+    /* .slide-stage is a preserve-3d context, so its children are depth-sorted and
+       z-index does not break ties. The frame and the screen both sat at z=0 —
+       coplanar composited layers whose order WebKit is free to resolve either way,
+       and re-resolves as the stage rotates. Push the frame a hair behind so the
+       sort has one answer. Sub-pixel at perspective 1800px. */
+    transform: translateZ(-1px);
   }
   
   .slide-header {
@@ -98,8 +103,9 @@
     overflow: hidden;
     padding: 0 var(--card-inset-x) var(--card-inset-bottom);
     isolation: isolate;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+    /* No translateZ(0) promotion here: inside the stage's 3D context it bought no
+       smoothing, it only added one more coplanar layer for WebKit to sort and
+       re-rasterise around the playing video. */
   }
   
   .slide-image {

@@ -300,11 +300,14 @@ export function bindPointerTilt(root: HTMLElement) {
     }
     if (!floating) return
     floating = false
-    const parts = activeSlideParts(root)
-    gsap.killTweensOf([parts?.leftTilt, parts?.rightTilt].filter(Boolean))
+    // Every tilt under the root, not just the active slide's: the yoyo repeats
+    // forever, so a card that floats and then loses swiper-slide-active keeps
+    // writing transforms nothing ever kills.
+    gsap.killTweensOf(Array.from(root.querySelectorAll(".slide-card-tilt")))
   }
 
   const startIdleFloat = () => {
+    idleTimer = 0
     if (isMobileLayout()) return
     const parts = activeSlideParts(root)
     if (!parts?.leftTilt && !parts?.rightTilt) {
@@ -346,6 +349,12 @@ export function bindPointerTilt(root: HTMLElement) {
   }
 
   const onMove = (event: MouseEvent) => {
+    // Safari re-dispatches a mousemove at the last known pointer position after a
+    // layout, to refresh :hover ("fake mouse move"). The looping slide videos make
+    // that fire over and over, and each one killed the idle float and re-tilted the
+    // stage while the pointer sat still — the twitch is Safari-only for that reason.
+    // A move that does not move the pointer is not a move.
+    if (event.clientX === lastX && event.clientY === lastY) return
     lastX = event.clientX
     lastY = event.clientY
     stopIdleFloat()
