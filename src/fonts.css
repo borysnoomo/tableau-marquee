@@ -1,0 +1,93 @@
+/* SF Pro is Apple's system UI face — referenced via the stack below, not bundled. */
+
+/* Avant Garde for Salesforce — brand display face (Demi) */
+@font-face {
+  font-family: "Avant Garde for Salesforce";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/AvantGardeForSalesforce-Demi.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Avant Garde for Salesforce";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/AvantGardeForSalesforce-Demi.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Avant Garde for Salesforce";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/AvantGardeForSalesforce-Demi.woff2") format("woff2");
+}
+
+/* Roboto */
+@font-face {
+  font-family: "Roboto";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/Roboto-Latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Roboto";
+  font-style: italic;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("/fonts/Roboto-Latin-Italic.woff2") format("woff2");
+}
+
+/* Salesforce Sans */
+@font-face {
+  font-family: "Salesforce Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/SalesforceSans-Regular.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Salesforce Sans";
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/SalesforceSans-Italic.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Salesforce Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/SalesforceSans-Bold.woff2") format("woff2");
+}
+
+:root {
+  --font-sf-pro: "SF Pro", "SF Pro Text", "SF Pro Display", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  --font-avant-garde: "Avant Garde for Salesforce", "ITC Avant Garde", sans-serif;
+  --font-roboto: "Roboto", sans-serif;
+  --font-salesforce-sans: "Salesforce Sans", Arial, sans-serif;
+}
+
+.font-sf-pro {
+  font-family: var(--font-sf-pro);
+}
+
+.font-avant-garde {
+  font-family: var(--font-avant-garde);
+  font-weight: 600;
+}
+
+.font-roboto {
+  font-family: var(--font-roboto);
+}
+
+.font-salesforce-sans {
+  font-family: var(--font-salesforce-sans);
+}

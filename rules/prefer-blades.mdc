@@ -1,0 +1,45 @@
+---
+description: Apply slider/marquee changes in the CMS blades implementation, not the React prototype.
+alwaysApply: true
+---
+
+# Prefer blades over React
+
+This repo has two marquee/slider implementations. **Blades is the product.** React is a leftover prototype. Do not change React unless the user explicitly asks to update the React version.
+
+## Edit these
+
+- Markup / content: `index.html` (CMS blade HTML)
+- Enhance / carousel / DOM: `src/blades/enhanceTableauMarquee.ts`
+- Slide chrome (frame, cards, media, icons): `src/blades/slideChrome.ts`
+- Blade-only CSS: `src/blades/tableauMarquee.css`
+- Shared motion: `src/slider/calloutMotion.ts`
+- Shared backgrounds: `src/slider/backgrounds.ts`
+- Shared visual CSS used by blades: `src/Slide/Slide.css`, `src/Carousel/Carousel.css`, `src/App.css`
+
+Entry: `src/main.tsx` already mounts React **and** calls `enhanceTableauMarquee()`. Keep that blades call. Do not remove or bypass it.
+
+## Do not edit (unless asked)
+
+- `src/App.tsx`
+- `src/Carousel/Carousel.tsx`
+- `src/Carousel/carouselData.ts`
+- `src/Slide/Slide.tsx`
+
+If a request sounds like “the slider”, “slides”, “callouts”, “cards”, “hero”, or “marquee”, implement it in blades + shared CSS/motion only.
+
+## Inline Figma images
+
+This blades layout can ship **only CSS and JS**. Do not add Figma assets as files under `public/` or as extra image URLs.
+
+- Put Figma SVGs, icons, frames, and backgrounds **inline** in CSS or JS (data URIs or markup strings). See `src/slider/backgrounds.ts`.
+- Raster Figma exports (PNG/WebP) also go inline as `data:image/...` in CSS or JS.
+- CMS slide/callout media in `index.html` is authored content — leave those URLs. Everything from Figma is chrome and must travel inside the CSS/JS bundle.
+
+```ts
+// ❌ BAD — extra file we cannot ship
+el.style.backgroundImage = "url(/bg.svg)"
+
+// ✅ GOOD — inlined in JS/CSS
+el.style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svg)}")`
+```
