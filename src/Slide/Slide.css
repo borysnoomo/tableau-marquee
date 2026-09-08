@@ -79,7 +79,6 @@
     font-weight: 600;
     line-height: 29px;
     letter-spacing: -0.03em;
-    white-space: nowrap;
     color: #fff;
   }
   
@@ -202,9 +201,12 @@
     overflow: hidden;
     border-radius: var(--callout-img-radius);
     isolation: isolate;
+    background: #fff;
+  }
+
+  .slide-card[data-card-media="video"] .slide-card-media {
     transform: translateZ(0);
     -webkit-transform: translateZ(0);
-    background: #fff;
   }
   
   .slide-card-photo {
@@ -223,9 +225,6 @@
   video.slide-card-photo {
     z-index: 0;
     border-radius: 0;
-    /* Safari promotes <video> into a native overlay if it has its own
-       transform/filter/backface. That overlay ignores z-index (glass tint
-       over the picture) and jitters while the slide translates. */
     transform: none;
     filter: none;
     backface-visibility: visible;

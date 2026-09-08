@@ -264,10 +264,6 @@ export function bindPointerTilt(root: HTMLElement) {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return noop
 
   if (!isMobileLayout()) {
-    // Nothing pans .slide-image any more, and priming it with x/y wrote an inline
-    // transform onto every screen — including the <video> ones that Slide.css keeps
-    // transform-free on purpose. A transformed video is composited from a texture
-    // instead of being drawn by the video path, which costs a step of resampling.
     gsap.set(root.querySelectorAll(".slide-stage"), { transformPerspective: 0 })
   }
 
@@ -308,15 +304,28 @@ export function bindPointerTilt(root: HTMLElement) {
     }
     if (!floating) return
     floating = false
-    // Every tilt under the root, not just the active slide's: the yoyo repeats
-    // forever, so a card that floats and then loses swiper-slide-active keeps
-    // writing transforms nothing ever kills.
+    
     gsap.killTweensOf(Array.from(root.querySelectorAll(".slide-card-tilt")))
+  }
+
+  const settleStage = () => {
+    const parts = activeSlideParts(root)
+    const stage = parts?.stage
+    if (!stage) return
+    gsap.to(stage, {
+      rotationX: 0,
+      rotationY: 0,
+      duration: 0.6,
+      ease: "power2.out",
+      overwrite: "auto",
+      onComplete: () => gsap.set(stage, { clearProps: "transform" }),
+    })
   }
 
   const startIdleFloat = () => {
     idleTimer = 0
     if (isMobileLayout()) return
+    settleStage()
     const parts = activeSlideParts(root)
     if (!parts?.leftTilt && !parts?.rightTilt) {
       scheduleIdleFloat()
