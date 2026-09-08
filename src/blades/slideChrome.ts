@@ -73,8 +73,10 @@ function createCardMediaEl(media: CardMedia) {
     video.muted = true
     video.loop = true
     video.playsInline = true
-    video.autoplay = true
-    video.preload = "auto"
+    // Loading is driven by syncSlideVideos: the active slide's screen video gets the
+    // bandwidth first, callout videos follow. Eager preload here made the first slide
+    // sit on its poster until every cloned callout had downloaded.
+    video.preload = "none"
     video.disablePictureInPicture = true
     video.setAttribute("playsinline", "")
     video.setAttribute("webkit-playsinline", "")
@@ -148,7 +150,7 @@ export function createSlideMediaEl(media: CardMedia, title: string) {
     video.muted = true
     video.loop = true
     video.playsInline = true
-    video.preload = "metadata"
+    video.preload = "none"
     video.setAttribute("playsinline", "")
     video.setAttribute("webkit-playsinline", "")
     if (media.poster) video.poster = media.poster

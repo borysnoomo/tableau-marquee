@@ -162,12 +162,140 @@ function buildSlide(source: SlideSource) {
   return item
 }
 
+// Every video is authored with preload="none" so the network is free for whatever the
+// viewer is actually looking at. Loading is staged from here: the active slide's screen
+// video first, its callout videos once that has a frame to show, and the remaining
+// (cloned / off-centre) slides only after that. Without the staging the first slide sat
+// on its poster while the callout clips downloaded ahead of it.
+const CARD_START_FALLBACK_MS = 1200
+const WARM_REST_DELAY_MS = 400
+
+const RESUME_LIMIT = 5
+
+const cardsScheduled = new WeakSet<Element>()
+const wantsPlay = new WeakSet<HTMLVideoElement>()
+const resumeBound = new WeakSet<HTMLVideoElement>()
+const resumeCount = new WeakMap<HTMLVideoElement, number>()
+
+function startVideo(video: HTMLVideoElement) {
+  wantsPlay.add(video)
+  bindResume(video)
+  if (video.preload !== "auto") {
+    // The element already ran resource selection under preload="none" and parked itself in
+    // "suspend"; a play() issued in that state is dropped instead of queued. load() restarts
+    // selection with the new preload so playback starts as soon as the first frames land.
+    video.preload = "auto"
+    if (video.readyState === 0) video.load()
+  }
+  void video.play().catch(() => {})
+}
+
+function stopVideo(video: HTMLVideoElement) {
+  wantsPlay.delete(video)
+  video.pause()
+}
+
+// Swiper re-parents slide elements to keep the loop filled, and a <video> that is detached
+// and re-attached pauses itself. The listener lives on the element, not on the carousel:
+// the pause fires while the node is out of the tree, so it never reaches an ancestor.
+// Nothing else pauses a video we asked to play, so any such pause is safe to undo.
+function bindResume(video: HTMLVideoElement) {
+  if (resumeBound.has(video)) return
+  resumeBound.add(video)
+
+  video.addEventListener("pause", () => {
+    if (!wantsPlay.has(video)) return
+    const used = resumeCount.get(video) ?? 0
+    if (used >= RESUME_LIMIT) return
+    resumeCount.set(video, used + 1)
+    // A timer, not rAF: a backgrounded tab never runs animation frames, and playback has to
+    // be correct by the time the tab is looked at again.
+    window.setTimeout(() => {
+      if (wantsPlay.has(video)) void video.play().catch(() => {})
+    }, 0)
+  })
+
+  video.addEventListener("playing", () => resumeCount.delete(video))
+}
+
+function whenPlayable(video: HTMLVideoElement | null, run: () => void) {
+  if (!video || video.readyState >= 3) {
+    run()
+    return
+  }
+  let done = false
+  const fire = () => {
+    if (done) return
+    done = true
+    window.clearTimeout(timer)
+    video.removeEventListener("canplay", fire)
+    run()
+  }
+  const timer = window.setTimeout(fire, CARD_START_FALLBACK_MS)
+  video.addEventListener("canplay", fire, { once: true })
+}
+
+function slideVideos(slideEl: Element) {
+  const all = [...slideEl.querySelectorAll<HTMLVideoElement>("video")]
+  const screen = all.find((video) => video.classList.contains("slide-image")) ?? null
+  return { screen, cards: all.filter((video) => video !== screen), all }
+}
+
+let warmTimer = 0
+
+function warmRemainingSlides(swiper: Swiper) {
+  if (warmTimer) return
+  warmTimer = window.setTimeout(() => {
+    warmTimer = 0
+    for (const slideEl of swiper.slides) {
+      if (slideEl.classList.contains("swiper-slide-active")) continue
+      for (const video of slideEl.querySelectorAll<HTMLVideoElement>("video")) {
+        if (video.preload !== "none") continue
+        video.preload = "auto"
+        // Flipping the attribute alone does not always restart resource selection once
+        // the element has settled on preload="none".
+        if (video.networkState === HTMLMediaElement.NETWORK_EMPTY) video.load()
+      }
+    }
+  }, WARM_REST_DELAY_MS)
+}
+
+// Swiper reshuffles slide elements for the loop, so `swiper-slide-active` can move to a
+// different node after init without any of the change callbacks running — the node that
+// ended up centred had been paused as "inactive" and nothing started it again, which left
+// the first slide sitting on its poster. Watching the class itself keeps playback tied to
+// whatever is actually centred.
+function observeActiveSlide(host: HTMLElement, run: () => void) {
+  let queued = 0
+  const observer = new MutationObserver(() => {
+    if (queued) return
+    queued = window.setTimeout(() => {
+      queued = 0
+      run()
+    }, 0)
+  })
+  observer.observe(host, { subtree: true, attributes: true, attributeFilter: ["class"] })
+}
+
 function syncSlideVideos(swiper: Swiper) {
   for (const slideEl of swiper.slides) {
-    const active = slideEl.classList.contains("swiper-slide-active")
-    for (const video of slideEl.querySelectorAll<HTMLVideoElement>("video")) {
-      if (active) void video.play().catch(() => {})
-      else video.pause()
+    const { screen, cards, all } = slideVideos(slideEl)
+    if (!slideEl.classList.contains("swiper-slide-active")) {
+      for (const video of all) stopVideo(video)
+      continue
+    }
+
+    if (screen) startVideo(screen)
+
+    const startRest = () => {
+      for (const video of cards) startVideo(video)
+      warmRemainingSlides(swiper)
+    }
+
+    if (cardsScheduled.has(slideEl)) startRest()
+    else {
+      cardsScheduled.add(slideEl)
+      whenPlayable(screen, startRest)
     }
   }
 }
@@ -297,6 +425,7 @@ function initCarousel(root: HTMLElement) {
     spaceBetween: 12,
     centeredSlides: true,
     loop: true,
+    roundLengths: true,
     speed: SPEED_MS,
     watchSlidesProgress: true,
     initialSlide: 0,
@@ -366,6 +495,8 @@ function initCarousel(root: HTMLElement) {
 
   prev.addEventListener("click", () => requestNavigation(-1))
   next.addEventListener("click", () => requestNavigation(1))
+
+  observeActiveSlide(swiperHost, () => syncSlideVideos(swiper))
 
   const tilt = bindPointerTilt(carousel)
   swiper.on("slideChangeTransitionStart", () => tilt.onSlideTransition())
