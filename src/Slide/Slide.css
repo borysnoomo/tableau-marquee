@@ -155,11 +155,13 @@
     -webkit-backface-visibility: hidden;
   }
   
-  /* GSAP retilts these on every mousemove; hold one composited layer for the
-     slide actually being tilted rather than re-promoting per frame. */
-  .swiper-slide-active .slide-card-tilt {
-    will-change: transform;
-  }
+  /* No will-change here. It pinned a composited layer for the callouts of the
+     slide that had just become active — i.e. exactly while .carousel-item was
+     still ramping from scale(0.38) to scale(1) — and a pinned layer keeps the
+     raster scale it was created at. The card was then blown up ~2.6x from a
+     third-size texture and never re-rasterised, which reads as permanent blur
+     on a 1x display (a 2x display halves the error, so it hid on retina).
+     GSAP promotes the element for the duration of a tilt tween anyway. */
 
   .slide-card-tilt {
     width: 100%;

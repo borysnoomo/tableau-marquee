@@ -110,7 +110,10 @@ function tiltCard(
     duration: 0.5,
     ease: "power3.out",
     overwrite: "auto",
-    force3D: true,
+    // "auto", not true: force3D pins translateZ(0) on the card for good, and a
+    // permanently promoted layer is rasterised once at whatever scale it was
+    // promoted at. GSAP still uses the 3D path for the duration of the tween.
+    force3D: "auto",
   })
 }
 
@@ -132,7 +135,6 @@ export function activeSlideParts(root: HTMLElement) {
   const cards = queryCallouts(slide)
   return {
     stage: slide.querySelector<HTMLElement>(".slide-stage"),
-    image: slide.querySelector<HTMLElement>(".slide-image"),
     leftCard: cards.left,
     rightCard: cards.right,
     leftTilt: cards.left?.querySelector<HTMLElement>(".slide-card-tilt") ?? null,
@@ -143,11 +145,14 @@ export function activeSlideParts(root: HTMLElement) {
 export function resetSlideTilt(slide: Element) {
   if (isMobileLayout()) return
   const stage = slide.querySelector<HTMLElement>(".slide-stage")
-  const image = slide.querySelector<HTMLElement>(".slide-image")
   const tilts = slide.querySelectorAll<HTMLElement>(".slide-card-tilt")
-  if (stage) gsap.set(stage, { rotationX: 0, rotationY: 0, transformPerspective: 0 })
-  if (image) gsap.set(image, { x: 0, y: 0 })
-  if (tilts.length) gsap.set(tilts, { rotationX: 0, rotationY: 0, x: 0, y: 0 })
+  // clearProps rather than "tween everything back to 0": a zeroed GSAP transform is
+  // still an inline matrix, and an inline matrix keeps the element on a composited
+  // layer of its own for as long as it is there. An off-centre slide has nothing to
+  // animate, so it should paint straight into the carousel at the scale it is shown
+  // at instead of being blown up from a texture.
+  if (stage) gsap.set(stage, { clearProps: "transform" })
+  if (tilts.length) gsap.set(tilts, { clearProps: "transform" })
 }
 
 export function applySlideSides(swiper: { slides: ArrayLike<HTMLElement> }) {
@@ -259,7 +264,10 @@ export function bindPointerTilt(root: HTMLElement) {
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return noop
 
   if (!isMobileLayout()) {
-    gsap.set(root.querySelectorAll(".slide-image"), { x: 0, y: 0 })
+    // Nothing pans .slide-image any more, and priming it with x/y wrote an inline
+    // transform onto every screen — including the <video> ones that Slide.css keeps
+    // transform-free on purpose. A transformed video is composited from a texture
+    // instead of being drawn by the video path, which costs a step of resampling.
     gsap.set(root.querySelectorAll(".slide-stage"), { transformPerspective: 0 })
   }
 
@@ -342,7 +350,7 @@ export function bindPointerTilt(root: HTMLElement) {
       duration: 0.45,
       ease: "power3.out",
       overwrite: "auto",
-      force3D: true,
+      force3D: "auto",
     })
     tiltCard(parts.leftTilt, parts.leftCard, clientX, clientY, cardX, panX, panY)
     tiltCard(parts.rightTilt, parts.rightCard, clientX, clientY, cardX, panX, panY)

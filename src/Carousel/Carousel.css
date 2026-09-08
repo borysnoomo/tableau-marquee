@@ -19,7 +19,12 @@
     overflow-x: clip;
     overflow-y: visible;
     padding-block: var(--tilt-gutter);
-    perspective: 1800px;
+    /* No perspective here. Nothing between this element and .slide carries a z
+       offset, so it changed nothing visually, but it put every slide into one 3D
+       rendering context: the whole strip is then composited as textures that are
+       rasterised once and re-used across the scale(0.38) -> scale(1) ramp, which
+       is what made the slider look soft on 1x displays. The tilt gets its depth
+       from .slide's own perspective. */
     /* The pointer tilt runs on mousemove, so a press-and-move over the slider
        reads as a text drag in Safari and selects the slide copy behind it. */
     user-select: none;
