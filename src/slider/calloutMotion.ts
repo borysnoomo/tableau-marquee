@@ -110,9 +110,6 @@ function tiltCard(
     duration: 0.5,
     ease: "power3.out",
     overwrite: "auto",
-    // "auto", not true: force3D pins translateZ(0) on the card for good, and a
-    // permanently promoted layer is rasterised once at whatever scale it was
-    // promoted at. GSAP still uses the 3D path for the duration of the tween.
     force3D: "auto",
   })
 }
