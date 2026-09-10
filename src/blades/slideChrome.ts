@@ -4,6 +4,10 @@ export type CardMedia = {
   kind: CardMediaKind
   src: string
   poster?: string
+  srcset?: string
+  /** Authored description: alt on <img>, aria-label on <video>. Cloned media carries
+   *  it across, otherwise every screen and callout reaches the page unnamed. */
+  alt?: string
 }
 
 function svg(html: string) {
@@ -32,15 +36,58 @@ function imageSrc(img: HTMLImageElement | null) {
   return authoredSrc(img) || img.currentSrc || img.src || ""
 }
 
+// WordPress blades ship src="?w=1024" plus a srcset up to 1536w. The clone used to
+// copy only src, so a 862px slide on a 1.5x/2x display was painted from 1024px —
+// visibly soft — while <video> kept its full file and stayed sharp.
+function largestSrcsetUrl(srcset: string) {
+  let bestUrl = ""
+  let bestWidth = 0
+  for (const candidate of srcset.split(",")) {
+    const [url, descriptor] = candidate.trim().split(/\s+/)
+    if (!url) continue
+    const width = descriptor?.endsWith("w") ? Number.parseInt(descriptor, 10) : 0
+    if (width >= bestWidth) {
+      bestWidth = width
+      bestUrl = url
+    }
+  }
+  return bestUrl
+}
+
+function readImageMedia(img: HTMLImageElement): CardMedia {
+  const srcset = authoredSrc(img, "srcset")
+  return {
+    kind: "image",
+    src: (srcset && largestSrcsetUrl(srcset)) || imageSrc(img),
+    srcset: srcset || undefined,
+    alt: authoredSrc(img, "alt") || undefined,
+  }
+}
+
+function applyImageSources(img: HTMLImageElement, media: CardMedia, sizes: string) {
+  img.src = media.src
+  if (media.srcset) {
+    img.srcset = media.srcset
+    img.sizes = sizes
+  }
+}
+
 function readMediaFrom(host: ParentNode | null): CardMedia | null {
   if (!host) return null
   const video = host.querySelector<HTMLVideoElement>("video")
   const src = videoSrc(video)
-  if (src) return { kind: "video", src, poster: authoredSrc(video, "poster") || undefined }
+  if (src)
+    return {
+      kind: "video",
+      src,
+      poster: authoredSrc(video, "poster") || undefined,
+      alt: authoredSrc(video, "aria-label") || undefined,
+    }
   const img = host.querySelector<HTMLImageElement>("img")
-  const imgSrc = imageSrc(img)
-  if (imgSrc) return { kind: "image", src: imgSrc }
-  return null
+  if (!img) return null
+  const media = readImageMedia(img)
+  if (!media.src) return null
+  return media
 }
 
 export function readNupCardMedia(card: HTMLElement | undefined): CardMedia | null {
@@ -48,20 +95,40 @@ export function readNupCardMedia(card: HTMLElement | undefined): CardMedia | nul
   return readMediaFrom(card.querySelector(".card__image__wrapper") ?? card)
 }
 
-export function readMediaBlade(section: HTMLElement): { title: string; media: CardMedia } | null {
-  const title =
-    section.querySelector(".display_caption")?.textContent?.replace(/\s+/g, " ").trim() ?? ""
+function collapseCaptionWhitespace(value: string) {
+  // CMS captions are indented across lines. Collapse that wrapping whitespace, but
+  // keep authored non-breaking spaces so `&nbsp;` can pin two words on one line.
+  // `\s` matches U+00A0, which is why a naive replace turned every `&nbsp;` into a
+  // regular space and the title wrapped anyway.
+  return value.replace(/[ \t\n\r\f\v]+/g, " ").trim()
+}
+
+function readCaption(section: HTMLElement) {
+  const caption = section.querySelector(".display_caption")
+  const source = caption?.querySelector("p") ?? caption
+  if (!source) return { html: "", text: "" }
+  const html = collapseCaptionWhitespace(source.innerHTML)
+  const text = collapseCaptionWhitespace(source.textContent ?? "")
+  return { html, text }
+}
+
+export function readMediaBlade(
+  section: HTMLElement,
+): { title: string; titleHtml: string; media: CardMedia } | null {
+  const { html, text } = readCaption(section)
   const host =
     section.querySelector(".video__wrapper, .image__wrapper") ?? section
   const media = readMediaFrom(host)
   if (!media) return null
-  return { title, media }
+  return { title: text, titleHtml: html, media }
 }
 
 function createGlassCover() {
   const glass = document.createElement("div")
   glass.className = "slide-card-glass"
-  glass.setAttribute("aria-hidden", "true")
+  // No aria-hidden here: this element wraps the callout media, so hiding it hid the
+  // picture too. The sheen laid over the media (.slide-card-media-cover) is the part
+  // that is decorative, and that one is still hidden.
   return glass
 }
 
@@ -82,13 +149,18 @@ function createCardMediaEl(media: CardMedia) {
     video.setAttribute("webkit-playsinline", "")
     video.setAttribute("disablepictureinpicture", "")
     if (media.poster) video.poster = media.poster
+    if (media.alt) video.setAttribute("aria-label", media.alt)
     return video
   }
 
   const img = document.createElement("img")
   img.className = "slide-card-photo"
-  img.src = media.src
-  img.alt = ""
+  img.alt = media.alt ?? ""
+  applyImageSources(
+    img,
+    media,
+    "(min-width: 2560px) 341px, (min-width: 1440px) 273px, 134px",
+  )
   return img
 }
 
@@ -154,6 +226,7 @@ export function createSlideMediaEl(media: CardMedia, title: string) {
     video.setAttribute("playsinline", "")
     video.setAttribute("webkit-playsinline", "")
     if (media.poster) video.poster = media.poster
+    video.setAttribute("aria-label", media.alt || title)
     const source = document.createElement("source")
     source.src = media.src
     source.type = "video/mp4"
@@ -163,8 +236,12 @@ export function createSlideMediaEl(media: CardMedia, title: string) {
 
   const img = document.createElement("img")
   img.className = "slide-image"
-  img.src = media.src
-  img.alt = title
+  img.alt = media.alt || title
+  applyImageSources(
+    img,
+    media,
+    "(min-width: 2560px) 1075px, (min-width: 1440px) 862px, 92vw",
+  )
   return img
 }
 
