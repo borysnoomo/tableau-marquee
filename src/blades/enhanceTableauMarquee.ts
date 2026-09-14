@@ -80,6 +80,7 @@ function styleMarquee(root: HTMLElement) {
 
 type SlideSource = {
   title: string
+  titleHtml: string
   media: CardMedia
   leftMedia: CardMedia | null
   rightMedia: CardMedia | null
@@ -117,6 +118,7 @@ function readSlideSources(root: HTMLElement): SlideSource[] {
     const pair = callouts.get(slideNum)
     slides.push({
       title: data.title,
+      titleHtml: data.titleHtml,
       media: data.media,
       leftMedia: pair?.left ?? null,
       rightMedia: pair?.right ?? null,
@@ -139,21 +141,25 @@ function buildSlide(source: SlideSource) {
   const stage = document.createElement("div")
   stage.className = "slide-stage"
 
+  const scene = document.createElement("div")
+  scene.className = "slide-mockup-scene"
+  const mockup = document.createElement("div")
+  mockup.className = "slide-mockup"
+
   const header = document.createElement("div")
   header.className = "slide-header"
   const headline = document.createElement("h3")
   headline.className = "slide-title"
-  headline.textContent = source.title
+  headline.innerHTML = source.titleHtml || source.title
   header.append(headline)
 
   const imageContainer = document.createElement("div")
   imageContainer.className = "slide-image-container"
   imageContainer.append(createSlideMediaEl(source.media, source.title))
 
-  // The frame sits behind the screen. .slide-stage is a preserve-3d context, where
-  // z-index does not sort — coplanar layers fall back to tree order — so the frame
-  // must come first in the DOM, not rely on its lower z-index.
-  stage.append(createFrameSvg(nextUid()), header, imageContainer)
+  mockup.append(createFrameSvg(nextUid()), header, imageContainer)
+  scene.append(mockup)
+  stage.append(scene)
   if (source.leftMedia) stage.append(createLeftCard(source.leftMedia))
   if (source.rightMedia) stage.append(createRightCard(source.rightMedia))
   slide.append(stage)

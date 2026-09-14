@@ -12,30 +12,27 @@ export const MOBILE_CALLOUT_ENTER_DELAY_MS = 400
 export const MOBILE_MQ = "(max-width: 1023px)"
 export const TABLET_MQ = "(min-width: 768px) and (max-width: 1023px)"
 
-const ROTATE_RANGE = 10
-const CARD_ROTATE_RANGE = 10
-const PARALLAX_RANGE = 28
 const CARD_INFLUENCE_MIN = 0.2
 const CARD_INFLUENCE_MAX = 2
 const CARD_RADIUS_SCALE = 1
 const USE_CARD_INFLUENCE = true
 const CARD_IDLE_DELAY_MS = 1000
+const PARALLAX_RANGE = 16
+const ROTATE_RANGE = 6
+const MOCKUP_PERSPECTIVE = 1800
+const MOCKUP_Z = 0
 
-const LEFT_FLOAT_A = { rotationX: 0, rotationY: 1.1, x: 2, y: -3 }
-const LEFT_FLOAT_B = { rotationX: 0, rotationY: -0.85, x: -1.8, y: 2.4 }
-const RIGHT_FLOAT_A = { rotationX: 0, rotationY: -1.2, x: -2.4, y: 2.2 }
-const RIGHT_FLOAT_B = { rotationX: 0, rotationY: 0.95, x: 2.1, y: -2.8 }
+// 2D pan only. rotationY/X or z on the still's wrapper composites <img> as a
+// texture (videos keep a decoder layer). Whole pixels, force3D: false.
+const LEFT_FLOAT_A = { x: 4, y: -6 }
+const LEFT_FLOAT_B = { x: -4, y: 5 }
+const RIGHT_FLOAT_A = { x: -5, y: 4 }
+const RIGHT_FLOAT_B = { x: 5, y: -6 }
 
-const CALLOUT_Z_DESKTOP = 100
-const CALLOUT_Z_TABLET = -48
-const CALLOUT_Z_MOBILE = 10
 const CALLOUT_PERSPECTIVE_DESKTOP = 1400
 const CALLOUT_PERSPECTIVE_TABLET = 620
 const CALLOUT_PERSPECTIVE_MOBILE = 400
 const CALLOUT_SCALE_TABLET = 0.72
-const CALLOUT_REST_Y_DESKTOP = 14
-const CALLOUT_REST_Y_TABLET = 22
-const CALLOUT_REST_Y_MOBILE = 9
 
 export const isMobileLayout = () =>
   window.matchMedia(MOBILE_MQ).matches || window.innerWidth <= 1023
@@ -45,19 +42,7 @@ export const isTabletLayout = () => {
   return window.matchMedia(TABLET_MQ).matches || (w >= 768 && w <= 1023)
 }
 
-const calloutZ = () => {
-  if (isTabletLayout()) return CALLOUT_Z_TABLET
-  if (isMobileLayout()) return CALLOUT_Z_MOBILE
-  return CALLOUT_Z_DESKTOP
-}
-
 const calloutScale = () => (isTabletLayout() ? CALLOUT_SCALE_TABLET : 1)
-
-const calloutRestY = () => {
-  if (isTabletLayout()) return CALLOUT_REST_Y_TABLET
-  if (isMobileLayout()) return CALLOUT_REST_Y_MOBILE
-  return CALLOUT_REST_Y_DESKTOP
-}
 
 const calloutPerspective = () => {
   const transformPerspective = isTabletLayout()
@@ -96,24 +81,18 @@ function tiltCard(
   card: HTMLElement | null,
   clientX: number,
   clientY: number,
-  rotationY: number,
   panX: number,
   panY: number,
 ) {
   if (!tilt || !card) return
   const influence = USE_CARD_INFLUENCE ? cardInfluence(card, clientX, clientY) : 1
   gsap.to(tilt, {
-    rotationX: 0,
-    rotationY: rotationY * influence,
     x: -panX * influence,
     y: panY * influence,
     duration: 0.5,
     ease: "power3.out",
     overwrite: "auto",
-    // "auto", not true: force3D pins translateZ(0) on the card for good, and a
-    // permanently promoted layer is rasterised once at whatever scale it was
-    // promoted at. GSAP still uses the 3D path for the duration of the tween.
-    force3D: "auto",
+    force3D: false,
   })
 }
 
@@ -135,6 +114,7 @@ export function activeSlideParts(root: HTMLElement) {
   const cards = queryCallouts(slide)
   return {
     stage: slide.querySelector<HTMLElement>(".slide-stage"),
+    mockup: slide.querySelector<HTMLElement>(".slide-mockup"),
     leftCard: cards.left,
     rightCard: cards.right,
     leftTilt: cards.left?.querySelector<HTMLElement>(".slide-card-tilt") ?? null,
@@ -144,14 +124,19 @@ export function activeSlideParts(root: HTMLElement) {
 
 export function resetSlideTilt(slide: Element) {
   if (isMobileLayout()) return
-  const stage = slide.querySelector<HTMLElement>(".slide-stage")
+  const mockup = slide.querySelector<HTMLElement>(".slide-mockup")
   const tilts = slide.querySelectorAll<HTMLElement>(".slide-card-tilt")
-  // clearProps rather than "tween everything back to 0": a zeroed GSAP transform is
-  // still an inline matrix, and an inline matrix keeps the element on a composited
-  // layer of its own for as long as it is there. An off-centre slide has nothing to
-  // animate, so it should paint straight into the carousel at the scale it is shown
-  // at instead of being blown up from a texture.
-  if (stage) gsap.set(stage, { clearProps: "transform" })
+  if (mockup) {
+    gsap.to(mockup, {
+      rotationX: 0,
+      rotationY: 0,
+      z: 0,
+      duration: SPEED_MS / 1000,
+      ease: "power2.out",
+      overwrite: "auto",
+      onComplete: () => gsap.set(mockup, { clearProps: "transform" }),
+    })
+  }
   if (tilts.length) gsap.set(tilts, { clearProps: "transform" })
 }
 
@@ -168,73 +153,79 @@ export function applySlideSides(swiper: { slides: ArrayLike<HTMLElement> }) {
 export function hideCallouts(cards: CalloutEls) {
   const els = calloutList(cards)
   if (!els.length) return
-  gsap.set(els, {
-    ...calloutPerspective(),
-    autoAlpha: 0,
-    rotationY: 0,
-    rotationX: 0,
-    z: 0,
-    scale: calloutScale(),
-    opacity: 0,
-    // force3D: true,
-  })
+  gsap.set(els, { autoAlpha: 0, opacity: 0, clearProps: "transform" })
+}
+
+function restCalloutTransform(el: HTMLElement) {
+  const scale = calloutScale()
+  if (scale !== 1) gsap.set(el, { scale, force3D: false })
+  else gsap.set(el, { clearProps: "transform" })
 }
 
 export function playCalloutEnter(cards: CalloutEls) {
   if (!cards.left && !cards.right) return
 
-  const restY = calloutRestY()
-  const z = calloutZ()
   const scale = calloutScale()
   const perspective = calloutPerspective()
   const tl = gsap.timeline({ defaults: { ease: "power2.out" } })
 
-  const flipIn = (el: HTMLElement, fromY: number, toY: number) => {
-    gsap.set(el, {
-      ...perspective,
-      visibility: "visible",
-      rotationX: 0,
-      x: 0,
-      y: 0,
-      z,
-      scale,
-      // force3D: true,
-    })
+  const flipIn = (el: HTMLElement, fromY: number) => {
+    gsap.set(el, { visibility: "visible" })
     tl.fromTo(
       el,
-      { opacity: 0, rotationY: fromY, z, scale, transformPerspective: perspective.transformPerspective },
+      {
+        opacity: 0,
+        rotationY: fromY,
+        scale,
+        transformPerspective: perspective.transformPerspective,
+      },
       {
         opacity: 1,
-        rotationY: toY,
-        z,
+        rotationY: 0,
         scale,
         transformPerspective: perspective.transformPerspective,
         duration: 0.9,
         immediateRender: true,
-        // force3D: true,
+        onComplete: () => restCalloutTransform(el),
       },
       0,
     )
   }
 
-  if (cards.left) flipIn(cards.left, 120, restY)
-  if (cards.right) flipIn(cards.right, -120, -restY)
+  if (cards.left) flipIn(cards.left, 120)
+  if (cards.right) flipIn(cards.right, -120)
   return tl
 }
 
 export function playCalloutLeave(cards: CalloutEls) {
   const els = calloutList(cards)
   if (!els.length) return
-  const z = isMobileLayout() ? calloutZ() : 0
   const scale = calloutScale()
   const perspective = calloutPerspective()
   const tl = gsap.timeline({ defaults: { ease: "power2.in" } })
-  if (cards.left) {
-    tl.to(cards.left, { rotationY: 120, rotationX: 0, z, scale, ...perspective, autoAlpha: 0, opacity: 0, duration: 0.45 }, 0)
+  const flipOut = (el: HTMLElement, toY: number) => {
+    tl.fromTo(
+      el,
+      {
+        rotationY: 0,
+        scale,
+        opacity: 1,
+        transformPerspective: perspective.transformPerspective,
+      },
+      {
+        rotationY: toY,
+        scale,
+        autoAlpha: 0,
+        opacity: 0,
+        transformPerspective: perspective.transformPerspective,
+        duration: 0.45,
+        immediateRender: true,
+      },
+      0,
+    )
   }
-  if (cards.right) {
-    tl.to(cards.right, { rotationY: -120, rotationX: 0, z, scale, ...perspective, autoAlpha: 0, opacity: 0, duration: 0.45 }, 0)
-  }
+  if (cards.left) flipOut(cards.left, 120)
+  if (cards.right) flipOut(cards.right, -120)
   return tl
 }
 
@@ -245,7 +236,7 @@ function resetCalloutTilt(cards: CalloutEls) {
   ].filter((el): el is HTMLElement => Boolean(el))
   if (!tilts.length) return
   gsap.killTweensOf(tilts)
-  gsap.set(tilts, { rotationX: 0, rotationY: 0, x: 0, y: 0 })
+  gsap.set(tilts, { clearProps: "transform" })
 }
 
 export function playSlideCallouts(slide: Element | null, mode: "enter" | "leave" | "hide") {
@@ -262,10 +253,6 @@ export function playSlideCallouts(slide: Element | null, mode: "enter" | "leave"
 export function bindPointerTilt(root: HTMLElement) {
   const noop = Object.assign(() => {}, { onSlideTransition() {} })
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return noop
-
-  if (!isMobileLayout()) {
-    gsap.set(root.querySelectorAll(".slide-stage"), { transformPerspective: 0 })
-  }
 
   let frame = 0
   let idleTimer = 0
@@ -284,6 +271,7 @@ export function bindPointerTilt(root: HTMLElement) {
       duration: 1.4,
       ease: "sine.inOut",
       overwrite: "auto",
+      force3D: false,
       onComplete: () => {
         if (!floating) return
         gsap.to(target, {
@@ -292,6 +280,7 @@ export function bindPointerTilt(root: HTMLElement) {
           ease: "sine.inOut",
           repeat: -1,
           yoyo: true,
+          force3D: false,
         })
       },
     })
@@ -304,28 +293,27 @@ export function bindPointerTilt(root: HTMLElement) {
     }
     if (!floating) return
     floating = false
-    
-    gsap.killTweensOf(Array.from(root.querySelectorAll(".slide-card-tilt")))
+    gsap.killTweensOf(root.querySelectorAll(".slide-card-tilt"))
   }
 
-  const settleStage = () => {
-    const parts = activeSlideParts(root)
-    const stage = parts?.stage
-    if (!stage) return
-    gsap.to(stage, {
+  const settleMockup = () => {
+    const mockup = activeSlideParts(root)?.mockup
+    if (!mockup) return
+    gsap.to(mockup, {
       rotationX: 0,
       rotationY: 0,
+      z: 0,
       duration: 0.6,
       ease: "power2.out",
       overwrite: "auto",
-      onComplete: () => gsap.set(stage, { clearProps: "transform" }),
+      onComplete: () => gsap.set(mockup, { clearProps: "transform" }),
     })
   }
 
   const startIdleFloat = () => {
     idleTimer = 0
-    if (isMobileLayout()) return
-    settleStage()
+    if (isMobileLayout() || calloutsBusy()) return
+    settleMockup()
     const parts = activeSlideParts(root)
     if (!parts?.leftTilt && !parts?.rightTilt) {
       scheduleIdleFloat()
@@ -341,28 +329,38 @@ export function bindPointerTilt(root: HTMLElement) {
     idleTimer = window.setTimeout(startIdleFloat, CARD_IDLE_DELAY_MS)
   }
 
-  const paint = (clientX: number, clientY: number) => {
+  const calloutsBusy = () => {
+    const parts = activeSlideParts(root)
+    return Boolean(
+      (parts?.leftCard && gsap.isTweening(parts.leftCard)) ||
+        (parts?.rightCard && gsap.isTweening(parts.rightCard)),
+    )
+  }
+
+  const paint = (clientX: number, clientY: number, duration = 0.45) => {
     if (isMobileLayout()) return
     const parts = activeSlideParts(root)
-    if (!parts?.stage) return
+    if (!parts?.mockup) return
 
     const { innerWidth, innerHeight } = window
     const yValue = calcValue(clientY, innerHeight, ROTATE_RANGE)
     const xValue = calcValue(clientX, innerWidth, ROTATE_RANGE)
-    const cardX = calcValue(clientX, innerWidth, CARD_ROTATE_RANGE)
     const panY = calcValue(clientY, innerHeight, PARALLAX_RANGE)
     const panX = calcValue(clientX, innerWidth, PARALLAX_RANGE)
 
-    gsap.to(parts.stage, {
+    gsap.to(parts.mockup, {
       rotationX: yValue,
       rotationY: xValue,
-      duration: 0.45,
+      z: MOCKUP_Z,
+      transformPerspective: MOCKUP_PERSPECTIVE,
+      duration,
       ease: "power3.out",
       overwrite: "auto",
       force3D: "auto",
     })
-    tiltCard(parts.leftTilt, parts.leftCard, clientX, clientY, cardX, panX, panY)
-    tiltCard(parts.rightTilt, parts.rightCard, clientX, clientY, cardX, panX, panY)
+    if (calloutsBusy()) return
+    tiltCard(parts.leftTilt, parts.leftCard, clientX, clientY, panX, panY)
+    tiltCard(parts.rightTilt, parts.rightCard, clientX, clientY, panX, panY)
   }
 
   const onMove = (event: MouseEvent) => {
@@ -388,17 +386,12 @@ export function bindPointerTilt(root: HTMLElement) {
 
   window.addEventListener("mousemove", onMove)
   window.addEventListener("resize", onResize)
-  paint(lastX, lastY)
   scheduleIdleFloat()
-  const later = window.setTimeout(() => {
-    if (!floating) paint(lastX, lastY)
-  }, 1200)
 
   const destroy = Object.assign(
     () => {
       window.removeEventListener("mousemove", onMove)
       window.removeEventListener("resize", onResize)
-      window.clearTimeout(later)
       stopIdleFloat()
       window.cancelAnimationFrame(frame)
     },
@@ -406,6 +399,7 @@ export function bindPointerTilt(root: HTMLElement) {
       onSlideTransition() {
         stopIdleFloat()
         scheduleIdleFloat()
+        paint(lastX, lastY, SPEED_MS / 1000)
       },
     },
   )
