@@ -9,7 +9,9 @@
   min-height: 100vh;
   width: 100%;
   background-image: var(--marquee-bg);
-  background-size: 100% auto;
+  --curve-lift: 280px;
+  --curve-ratio: 0.930226;
+  background-size: 100% calc((100% - var(--curve-lift)) / var(--curve-ratio));
   background-repeat: no-repeat;
   background-position: top center;
   overflow-x: clip;
@@ -19,6 +21,7 @@
 @media (max-width: 1023px) {
   .app {
     background-image: var(--marquee-bg-mobile);
+    background-size: 100% 100%;
   }
 }
 
@@ -31,6 +34,7 @@
 @media (min-width: 2560px) {
   .app {
     background-image: var(--marquee-bg-2k);
+    --curve-ratio: 0.894477;  /* 1162.82/1300 */
   }
 }
 

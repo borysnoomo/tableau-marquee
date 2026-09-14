@@ -1,7 +1,15 @@
 /** Figma "BG" plates. Pattern blurs and mask paths are from the Figma SVG exports.
  *  The empty foreignObject/backdrop-filter nodes are omitted — they do not render
- *  inside a CSS background-image data URI. */
-const desktopBg = `<svg width="1440" height="1106" viewBox="0 0 1440 1106" fill="none" xmlns="http://www.w3.org/2000/svg">
+ *  inside a CSS background-image data URI.
+ *
+ *  preserveAspectRatio="none" pairs with `background-size: 100% 100%` on the blade.
+ *  The plates carry the curved bottom edge of the blue section, and at the comp
+ *  aspect ratio (`100% auto`) that curve landed wherever width*ratio put it — above
+ *  the fold at 768/1920 (clipped away entirely), a few hundred px up inside the
+ *  carousel at 390/1024/1440/2560. Stretching the plate to the blade box pins the
+ *  curve to the section's bottom edge at every width; the artwork is a smooth
+ *  gradient plus blurred pills, so the 0.9–1.4x vertical scale is not visible. */
+const desktopBg = `<svg width="1440" height="1106" viewBox="0 0 1440 1106" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
 <mask id="mask0_637_6357" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="1440" height="1106">
 <foreignObject x="0" y="0" width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="backdrop-filter:blur(59.3px);clip-path:url(#bgblur_0_637_6357_clip_path);height:100%;width:100%"></div></foreignObject><path data-figma-bg-blur-radius="118.597" d="M1440 1106C1208 1055.46 967.102 1028.83 720 1028.83C472.898 1028.83 231.999 1055.46 0 1106V0H1440V1106Z" fill="url(#paint0_linear_637_6357)"/>
 </mask>
@@ -80,7 +88,7 @@ const desktopBg = `<svg width="1440" height="1106" viewBox="0 0 1440 1106" fill=
 </svg>
 `
 
-const bg2k = `<svg width="2560" height="1300" viewBox="0 0 2560 1300" fill="none" xmlns="http://www.w3.org/2000/svg">
+const bg2k = `<svg width="2560" height="1300" viewBox="0 0 2560 1300" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
 <mask id="mask0_2003_899" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="-140" width="2560" height="1440">
 <path d="M2560 1300C2147.56 1210.15 1719.29 1162.82 1280 1162.82C840.707 1162.82 412.443 1210.15 0 1300V-140C412.443 -50.1482 840.707 -2.81641 1280 -2.81641C1719.29 -2.81641 2147.56 -50.1482 2560 -140V1300Z" fill="url(#paint0_linear_2003_899)"/>
 </mask>
@@ -105,7 +113,7 @@ const bg2k = `<svg width="2560" height="1300" viewBox="0 0 2560 1300" fill="none
 </defs>
 </svg>`
 
-const tabletBg = `<svg width="768" height="1306" viewBox="0 0 768 1306" fill="none" xmlns="http://www.w3.org/2000/svg">
+const tabletBg = `<svg width="768" height="1306" viewBox="0 0 768 1306" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
 <mask id="mask0_637_6986" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="768" height="1306">
 <path d="M768 1306C644.267 1279.04 515.788 1264.85 384 1264.85C252.212 1264.85 123.733 1279.04 0 1306V0H768V1306Z" fill="url(#paint0_linear_637_6986)"/>
 </mask>
@@ -128,7 +136,7 @@ const tabletBg = `<svg width="768" height="1306" viewBox="0 0 768 1306" fill="no
 </defs>
 </svg>`
 
-const mobileBg = `<svg width="375" height="1064" viewBox="0 0 375 1064" fill="none" xmlns="http://www.w3.org/2000/svg">
+const mobileBg = `<svg width="375" height="1064" viewBox="0 0 375 1064" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
 <mask id="mask0_541_17670" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="376" height="1064">
 <path d="M375 856.002C375.003 856.001 375.007 856.001 375.01 856V1064C314.593 1051.02 251.859 1044.18 187.51 1044.18C123.16 1044.18 60.4263 1051.02 0.00976562 1064V878H0V0H375V856.002Z" fill="url(#paint0_linear_541_17670)"/>
 </mask>

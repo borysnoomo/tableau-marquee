@@ -8,7 +8,9 @@
   min-height: 100vh;
   width: 100%;
   background-image: var(--marquee-bg) !important;
-  background-size: 100% auto !important;
+  --curve-lift: 280px;
+  --curve-ratio: 0.930226;
+  background-size: 100% calc((100% - var(--curve-lift)) / var(--curve-ratio)) !important;
   background-repeat: no-repeat !important;
   background-position: top center !important;
   background-color: transparent !important;
@@ -234,6 +236,7 @@
 @media (min-width: 2560px) {
   #tableau-marquee-2026 {
     background-image: var(--marquee-bg-2k) !important;
+    --curve-ratio: 0.894477;  /* 1162.82/1300 */
   }
 
   #tableau-marquee-2026 .slide--claude .slide-card--left {
@@ -271,7 +274,8 @@
 @media (max-width: 1023px) {
   #tableau-marquee-2026 {
     background-image: var(--marquee-bg-mobile) !important;
-    background-size: 100% auto !important;
+    /* No lift below 1024: the curve sits on the blade's bottom edge. */
+    background-size: 100% 100% !important;
     background-repeat: no-repeat !important;
     background-position: top center !important;
   }
