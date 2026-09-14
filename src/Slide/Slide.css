@@ -22,7 +22,6 @@
     margin-inline: auto;
     aspect-ratio: 862 / 612;
     container-type: size;
-    perspective: 1800px;
     font-family: var(--font-salesforce-sans);
     color: #fff;
     overflow: visible;
@@ -31,10 +30,23 @@
   .slide-stage {
     position: absolute;
     inset: 0;
+    transform-style: flat;
+  }
+
+  .slide-mockup-scene {
+    position: absolute;
+    inset: 0;
+    perspective: 1800px;
+    perspective-origin: 50% 50%;
+  }
+
+  .slide-mockup {
+    position: absolute;
+    inset: 0;
     display: flex;
     flex-direction: column;
-    transform-style: preserve-3d;
     transform-origin: 50% 50%;
+    transform-style: preserve-3d;
   }
   
   .slide-frame {
@@ -48,12 +60,6 @@
     overflow: visible;
     pointer-events: none;
     filter: drop-shadow(0 12px 20px rgba(0, 30, 91, 0.05));
-    /* .slide-stage is a preserve-3d context, so its children are depth-sorted and
-       z-index does not break ties. The frame and the screen both sat at z=0 —
-       coplanar composited layers whose order WebKit is free to resolve either way,
-       and re-resolves as the stage rotates. Push the frame a hair behind so the
-       sort has one answer. Sub-pixel at perspective 1800px. */
-    transform: translateZ(-1px);
   }
   
   .slide-header {
@@ -68,16 +74,16 @@
     justify-content: center;
     pointer-events: none;
   }
-  
+
   .slide-title {
     flex: 1 1 auto;
     min-width: 0;
-    max-width: 605px;
+    max-width: 70.1856cqw;  /* 605/862 */
     margin: 0;
     font-family: var(--font-avant-garde);
-    font-size: 24px;
+    font-size: 2.4842cqw;  /* 24/862 */
     font-weight: 600;
-    line-height: 29px;
+    line-height: 3.3643cqw;  /* 29/862 */
     letter-spacing: -0.03em;
     color: #fff;
   }
@@ -101,10 +107,6 @@
     display: flex;
     overflow: hidden;
     padding: 0 var(--card-inset-x) var(--card-inset-bottom);
-    isolation: isolate;
-    /* No translateZ(0) promotion here: inside the stage's 3D context it bought no
-       smoothing, it only added one more coplanar layer for WebKit to sort and
-       re-rasterise around the playing video. */
   }
   
   .slide-image {
@@ -145,7 +147,6 @@
   .slide-card {
     position: absolute;
     z-index: 5;
-    transform: translateZ(80px);
     pointer-events: none;
     visibility: hidden;
     transform-style: flat;
@@ -242,7 +243,7 @@
   
   .slide-card--left {
     left: -13.5731%;  /* -117/862 */
-    top: 25.1634%;  /* 154/612 */
+    top: 49.1634%;  /* 154/612 */
     width: 25.6381%;  /* 221/862 */
   }
   
@@ -264,6 +265,16 @@
       --frame-width: 103.7209%;  /* (1075 + 2*20)/1075 */
       --frame-height: 105.2356%;  /* (764 + 8 + 32)/764 */
       aspect-ratio: 1075 / 764;
+    }
+
+    /* Held at the 862px comp's px values. The container units on .slide-title exist
+       to keep the header readable while the slide shrinks below 1440px; here the
+       slide only grows, the header already clears the title by 23px, and scaling the
+       type up would be a redesign of this breakpoint rather than a fix. */
+    .slide-title {
+      max-width: 605px;
+      font-size: 23px;
+      line-height: 29px;
     }
   
     .slide-card--left {
@@ -291,7 +302,6 @@
       border-radius: 16px;
       background: rgb(255 255 255 / 0.2);
       box-shadow: inset 0 0 0 0.6px rgb(255 255 255 / 0.45);
-      perspective: 400px;
       container-type: inline-size;
     }
 
@@ -300,6 +310,19 @@
     }
   
     .slide-stage {
+      position: relative;
+      inset: auto;
+      transform: none !important;
+      transform-style: flat;
+    }
+
+    .slide-mockup-scene {
+      position: relative;
+      inset: auto;
+      perspective: none;
+    }
+
+    .slide-mockup {
       position: relative;
       inset: auto;
       transform: none !important;
@@ -314,11 +337,12 @@
       flex: 0 0 auto;
       height: auto;
       padding: 12px 8px;
+      transform: none;
     }
   
     .slide-title {
       max-width: 311px;
-      font-size: 18px;
+      font-size: 16px;
       line-height: 22px;
       font-weight: 600;
       white-space: normal;
@@ -371,7 +395,6 @@
       --callout-img-radius: 12px;
       max-width: 582px;
       border-radius: 20px;
-      perspective: 620px;
     }
   
     .slide-header {
@@ -380,7 +403,7 @@
   
     .slide-title {
       max-width: 476px;
-      font-size: 24px;
+      font-size: 20px;
       font-weight: 600;
       line-height: 32px;
       letter-spacing: -0.06px;

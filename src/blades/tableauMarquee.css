@@ -308,7 +308,9 @@
   }
 
   #tableau-marquee-2026 .cta_button.hero-btn--primary,
-  #tableau-marquee-2026 a.cta_button[data-variant="primary"] {
+  #tableau-marquee-2026 a.cta_button[data-variant="primary"],
+  #tableau-marquee-2026 .cta_button.hero-btn--secondary,
+  #tableau-marquee-2026 a.cta_button[data-variant="secondary"] {
     width: 100%;
     box-sizing: border-box;
     flex: 1 0 100%;
