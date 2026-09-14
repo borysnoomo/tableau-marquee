@@ -78,12 +78,12 @@
   .slide-title {
     flex: 1 1 auto;
     min-width: 0;
-    max-width: 605px;
+    max-width: 70.1856cqw;  /* 605/862 */
     margin: 0;
     font-family: var(--font-avant-garde);
-    font-size: 24px;
+    font-size: 2.4842cqw;  /* 24/862 */
     font-weight: 600;
-    line-height: 29px;
+    line-height: 3.3643cqw;  /* 29/862 */
     letter-spacing: -0.03em;
     color: #fff;
   }
@@ -243,7 +243,7 @@
   
   .slide-card--left {
     left: -13.5731%;  /* -117/862 */
-    top: 25.1634%;  /* 154/612 */
+    top: 49.1634%;  /* 154/612 */
     width: 25.6381%;  /* 221/862 */
   }
   
@@ -265,6 +265,16 @@
       --frame-width: 103.7209%;  /* (1075 + 2*20)/1075 */
       --frame-height: 105.2356%;  /* (764 + 8 + 32)/764 */
       aspect-ratio: 1075 / 764;
+    }
+
+    /* Held at the 862px comp's px values. The container units on .slide-title exist
+       to keep the header readable while the slide shrinks below 1440px; here the
+       slide only grows, the header already clears the title by 23px, and scaling the
+       type up would be a redesign of this breakpoint rather than a fix. */
+    .slide-title {
+      max-width: 605px;
+      font-size: 23px;
+      line-height: 29px;
     }
   
     .slide-card--left {
@@ -332,7 +342,7 @@
   
     .slide-title {
       max-width: 311px;
-      font-size: 18px;
+      font-size: 16px;
       line-height: 22px;
       font-weight: 600;
       white-space: normal;
@@ -393,7 +403,7 @@
   
     .slide-title {
       max-width: 476px;
-      font-size: 24px;
+      font-size: 20px;
       font-weight: 600;
       line-height: 32px;
       letter-spacing: -0.06px;
